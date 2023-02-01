@@ -132,4 +132,29 @@ contract VRFD20 is VRFConsumerBaseV2 {
         require(msg.sender == s_owner);
         _;
     }
+
+    mapping (address => uint256) users;
+    uint256 win_number ;
+    mapping (uint256 => uint256) count;
+
+    function lottary_in(uint256 number) public payable {
+        require(msg.value == 0.001 ether);
+        require(users[msg.sender] == 0);
+
+        users[msg.sender]= number;
+        count[number] = count[number] + 1;
+    }
+
+    function lottart_set() onlyOwner public {
+        win_number = getRandomNumber();
+    }
+
+    function claim() public {
+        require(users[msg.sender]== win_number);
+
+        address payable to = payable(msg.sender);
+        uint256 reward = address(this).balance / count[win_number];
+        win_number = win_number - 1;
+        to.transfer(reward);
+    }
 }
