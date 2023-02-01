@@ -83,10 +83,7 @@ contract VRFD20 is VRFConsumerBaseV2 {
      *
      * @param roller address of the roller
      */
-    function rollDice(
-        address roller
-    ) public onlyOwner returns (uint256 requestId) {
-        require(s_results[roller] == 0, "Already rolled");
+    function rollDice(address roller) public onlyOwner returns (uint256 requestId) {
         // Will revert if subscription is not set and funded.
         requestId = COORDINATOR.requestRandomWords(
             s_keyHash,
@@ -132,6 +129,13 @@ contract VRFD20 is VRFConsumerBaseV2 {
         require(s_results[player] != 0, "Dice not rolled");
         require(s_results[player] != ROLL_IN_PROGRESS, "Roll in progress");
         return getHouseName(s_results[player]);
+    }
+
+    function getRandomNumber() public view returns (uint256) {
+        require(s_results[s_owner] != 0, "Dice not rolled");
+        require(s_results[s_owner] != ROLL_IN_PROGRESS, "Roll in progress");
+
+        return s_results[s_owner];
     }
 
     /**
