@@ -16,7 +16,7 @@ contract lottary {
     function lottary_in(uint256 number) public payable {
         require(msg.value == 0.001 ether);
         require(number != users[msg.sender]);
-        
+
         users[msg.sender] = number;
         count[number] = count[number] + 1;
     }
@@ -32,6 +32,7 @@ contract lottary {
         win_reward = address(this).balance / count[win_number];
 
         count[win_number] = count[win_number] - 1;
+        users[msg.sender] = 0 ;
         address payable to = payable(msg.sender);
         to.transfer(win_reward);
     }
