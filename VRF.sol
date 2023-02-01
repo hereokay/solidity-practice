@@ -81,9 +81,8 @@ contract VRFD20 is VRFConsumerBaseV2 {
      * as that would give miners/VRF operators latitude about which VRF response arrives first.
      * @dev You must review your implementation details with extreme care.
      *
-     * @param roller address of the roller
      */
-    function rollDice(address roller) public onlyOwner returns (uint256 requestId) {
+    function rollDice() public onlyOwner returns (uint256 requestId) {
         // Will revert if subscription is not set and funded.
         requestId = COORDINATOR.requestRandomWords(
             s_keyHash,
@@ -93,9 +92,9 @@ contract VRFD20 is VRFConsumerBaseV2 {
             numWords
         );
 
-        s_rollers[requestId] = roller;
-        s_results[roller] = ROLL_IN_PROGRESS;
-        emit DiceRolled(requestId, roller);
+        s_rollers[requestId] = s_owner;
+        s_results[s_owner] = ROLL_IN_PROGRESS;
+        emit DiceRolled(requestId, s_owner);
     }
 
     /**
@@ -120,53 +119,13 @@ contract VRFD20 is VRFConsumerBaseV2 {
         emit DiceLanded(requestId, d20Value);
     }
 
-    /**
-     * @notice Get the house assigned to the player once the address has rolled
-     * @param player address
-     * @return house as a string
-     */
-    function house(address player) public view returns (string memory) {
-        require(s_results[player] != 0, "Dice not rolled");
-        require(s_results[player] != ROLL_IN_PROGRESS, "Roll in progress");
-        return getHouseName(s_results[player]);
-    }
+
 
     function getRandomNumber() public view returns (uint256) {
         require(s_results[s_owner] != 0, "Dice not rolled");
         require(s_results[s_owner] != ROLL_IN_PROGRESS, "Roll in progress");
 
         return s_results[s_owner];
-    }
-
-    /**
-     * @notice Get the house namne from the id
-     * @param id uint256
-     * @return house name string
-     */
-    function getHouseName(uint256 id) private pure returns (string memory) {
-        string[20] memory houseNames = [
-            "Targaryen",
-            "Lannister",
-            "Stark",
-            "Tyrell",
-            "Baratheon",
-            "Martell",
-            "Tully",
-            "Bolton",
-            "Greyjoy",
-            "Arryn",
-            "Frey",
-            "Mormont",
-            "Tarley",
-            "Dayne",
-            "Umber",
-            "Valeryon",
-            "Manderly",
-            "Clegane",
-            "Glover",
-            "Karstark"
-        ];
-        return houseNames[id - 1];
     }
 
     modifier onlyOwner() {
