@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.12;
 
-contract pancake {
+contract lottery {
 
     uint256 round;
     uint256 price = 0.01 ether;
@@ -27,8 +27,12 @@ contract pancake {
     function claim(uint256 this_round) public {
         // emptys
     }
+    modifier onlyOwner() {
+        require(msg.sender == s_owner);
+        _;
+    }
 
-    function compare(uint256[] memory arr1, uint256[] memory arr2) public pure returns (bool) {
-        return keccak256(abi.encodePacked(arr1)) == keccak256(abi.encodePacked(arr2));
+    function compare(uint256[] memory numbers1, uint256[] memory numbers2) public pure returns (bool) {
+        return keccak256(abi.encodePacked(numbers1)) == keccak256(abi.encodePacked(numbers2));
     }
 }

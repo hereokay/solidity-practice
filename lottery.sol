@@ -4,6 +4,7 @@ pragma solidity ^0.8.7;
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 
+
 contract VRFD20 is VRFConsumerBaseV2 {
     uint256 private constant ROLL_IN_PROGRESS = 42;
 
@@ -63,11 +64,10 @@ contract VRFD20 is VRFConsumerBaseV2 {
         uint256 requestId,
         uint256[] memory randomWords
     ) internal override {
-        uint256 d20Value = (randomWords[0] % 20) + 1;
+        uint256 d20Value = (randomWords[0] % 3) + 1;
         s_results[s_rollers[requestId]] = d20Value;
         emit DiceLanded(requestId, d20Value);
     }
-
 
 
     function getRandomNumber() public view returns (uint256) {
@@ -77,34 +77,65 @@ contract VRFD20 is VRFConsumerBaseV2 {
         return s_results[s_owner];
     }
 
+
     modifier onlyOwner() {
         require(msg.sender == s_owner);
         _;
     }
+}
 
-    mapping (address => uint256) users;
-    uint256 win_number ;
-    mapping (uint256 => uint256) count;
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract Lottery is ERC20, Ownable {
+
+    mapping (uint256 => mapping (address => uint256[2])) table; // 0 : 번호, 양
+    mapping (uint256 => uint256) win_number;
+    uint256 round;
+        // Goerli coordinator. For other networks,
+    // see https://docs.chain.link/docs/vrf-contracts/#configurations
+    address vrfCoordinator = 0x7a1BaC17Ccc5b313516C5E16fb24f7659aA5ebed;
+    bytes32 s_keyHash =
+        0x4b09e658ed251bcafeebbc69400383d49f344ace09b9576fe248bb02c003fe9f;
+
+
+    
+    constructor() ERC20("Lottery", "ONE") {
+        _mint(msg.sender, 10000 * 10 ** decimals());
+    }
 
     function lottary_in(uint256 number) public payable {
-        require(msg.value == 0.001 ether);
-        require(users[msg.sender] == 0);
-
-        users[msg.sender]= number;
-
-        count[number] = count[number] + 1;
+        require(msg.value >= 0.000000001 ether,"to pay more than 1 Gwei");
+        table[round][msg.sender][0] = number;
+        table[round][msg.sender][1] = msg.value;
     }
 
-    function lottart_set() onlyOwner public {
-        win_number = getRandomNumber();
+
+    function lottart_set(VRFD20 _callee) onlyOwner public {        
+        win_number[round] = _callee.getRandomNumber();
+        round = round + 1;
     }
 
-    function claim() public {
-        require(users[msg.sender]== win_number);
+    function claim(uint target_round, uint number) public {
+        require(table[target_round][msg.sender][0] == number);
+        require(win_number[round]==number);
 
-        address payable to = payable(msg.sender);
-        uint256 reward = address(this).balance / count[win_number];
-        win_number = win_number - 1;
-        to.transfer(reward);
+        uint256 reward = table[target_round][msg.sender][1] * 3;
+        transfer(msg.sender,reward);
+    }
+
+
+    function token2eth(uint256 amount) public {
+        require(balanceOf(msg.sender) >= amount);
+        
+        // 토큰을 전송받기 위한 approve
+        approve(msg.sender, amount);
+        
+        // 실제 토큰 전송
+        transferFrom(msg.sender,address(this),amount);
+
+        // ether를 1대1 만큼 전송해준다.
+        address payable to = payable(msg.sender); 
+        to.transfer(amount); 
     }
 }
