@@ -60,10 +60,7 @@ contract VRFD20 is VRFConsumerBaseV2 {
     }
 
     
-    function fulfillRandomWords(
-        uint256 requestId,
-        uint256[] memory randomWords
-    ) internal override {
+    function fulfillRandomWords( uint256 requestId, uint256[] memory randomWords) internal override {
         uint256 d20Value = (randomWords[0] % 3) + 1;
         s_results[s_rollers[requestId]] = d20Value;
         emit DiceLanded(requestId, d20Value);
@@ -98,10 +95,11 @@ contract Lottery is ERC20, Ownable {
     bytes32 s_keyHash =
         0x4b09e658ed251bcafeebbc69400383d49f344ace09b9576fe248bb02c003fe9f;
 
-
+    address _addr = 0xd85e73d9FD5aFa1c8dcBC9ACB03dd2970efC2e11;
+    VRFD20 callee = VRFD20(_addr);
     
     constructor() ERC20("Lottery", "ONE") {
-        _mint(msg.sender, 10000 * 10 ** decimals());
+        _mint(msg.sender, 10000 * 10 ** decimals());        
     }
 
     function lottary_in(uint256 number) public payable {
@@ -109,10 +107,12 @@ contract Lottery is ERC20, Ownable {
         table[round][msg.sender][0] = number;
         table[round][msg.sender][1] = msg.value;
     }
+    function random_call() onlyOwner public {
+        callee.rollDice();
+    }
 
-
-    function lottart_set(VRFD20 _callee) onlyOwner public {        
-        win_number[round] = _callee.getRandomNumber();
+    function lottart_set() onlyOwner public {
+        win_number[round] = callee.getRandomNumber();
         round = round + 1;
     }
 
