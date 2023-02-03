@@ -270,6 +270,7 @@ pragma solidity ^0.8.7;
 
 
 
+
 contract VRFD20 is VRFConsumerBaseV2 {
     uint256 private constant ROLL_IN_PROGRESS = 42;
 
@@ -284,7 +285,7 @@ contract VRFD20 is VRFConsumerBaseV2 {
     bytes32 s_keyHash =
         0x4b09e658ed251bcafeebbc69400383d49f344ace09b9576fe248bb02c003fe9f;
 
-    
+
     uint32 callbackGasLimit = 40000;
 
     // The default is 3, but you can set this higher.
@@ -323,17 +324,12 @@ contract VRFD20 is VRFConsumerBaseV2 {
         s_results[s_owner] = ROLL_IN_PROGRESS;
         emit DiceRolled(requestId, s_owner);
     }
-
     
-    function fulfillRandomWords(
-        uint256 requestId,
-        uint256[] memory randomWords
-    ) internal override {
-        uint256 d20Value = (randomWords[0] % 20) + 1;
+    function fulfillRandomWords( uint256 requestId, uint256[] memory randomWords) internal override {
+        uint256 d20Value = (randomWords[0] % 3) + 1;
         s_results[s_rollers[requestId]] = d20Value;
         emit DiceLanded(requestId, d20Value);
     }
-
 
 
     function getRandomNumber() public view returns (uint256) {
@@ -346,31 +342,5 @@ contract VRFD20 is VRFConsumerBaseV2 {
     modifier onlyOwner() {
         require(msg.sender == s_owner);
         _;
-    }
-
-    mapping (address => uint256) users;
-    uint256 win_number ;
-    mapping (uint256 => uint256) count;
-
-    function lottary_in(uint256 number) public payable {
-        require(msg.value == 0.001 ether);
-        require(users[msg.sender] == 0);
-
-        users[msg.sender]= number;
-
-        count[number] = count[number] + 1;
-    }
-
-    function lottart_set() onlyOwner public {
-        win_number = getRandomNumber();
-    }
-
-    function claim() public {
-        require(users[msg.sender]== win_number);
-
-        address payable to = payable(msg.sender);
-        uint256 reward = address(this).balance / count[win_number];
-        win_number = win_number - 1;
-        to.transfer(reward);
     }
 }
